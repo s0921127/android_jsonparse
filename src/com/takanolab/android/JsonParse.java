@@ -13,6 +13,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.net.ParseException;
@@ -37,7 +39,7 @@ public class JsonParse extends Activity {
         String authority = "api.foursquare.com";
         String path = "/v2/venues/search";
         
-        String ll = "35.6865271,139.692311";
+        String ll = "35.485356, 139.341346";
         String oauth_token = "G4RUWUY4YAKSUWLEWLXPHRBQJZATY4XPTIAI4OT02CXMLMM3";
         String v = "20121017";
         Uri.Builder uriBuilder = new Uri.Builder();
@@ -96,8 +98,22 @@ public class JsonParse extends Activity {
         
         httpClient.getConnectionManager().shutdown();
         
+        String parsedText = "";
+        
+        try {
+            // オブジェクトの生成
+            JSONObject rootObject = new JSONObject(json);
+            
+            // JSON 形式データ文字列にインデントを加えた形に成形
+            parsedText = rootObject.toString(4);
+        }
+        catch (JSONException e){
+            // 例外処理
+        }
+           
         TextView textView = new TextView(this);
-        textView.setText(json);
+        textView.setHorizontallyScrolling(true);  // 行の折り返しをさせない
+        textView.setText(parsedText);             // 成形した文字列を表示
         ScrollView scrollView = new ScrollView(this);
         scrollView.addView(textView);
         setContentView(scrollView, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
