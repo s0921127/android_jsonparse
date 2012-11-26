@@ -13,6 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,7 +26,7 @@ import android.location.LocationManager;
 import android.net.ParseException;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.StrictMode;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -70,6 +71,9 @@ public class JsonParse extends Activity implements LocationListener {
         // 経度の表示
         //TextView tv_lng = (TextView) findViewById(R.id.Longitude);
         //tv_lng.setText("Longitude:"+location.getLongitude());
+    	
+    	//staticブロックなど、アプリケーション開始前に実行する。
+    	StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         
         String scheme = "https";
         String authority = "api.foursquare.com";
@@ -133,26 +137,40 @@ public class JsonParse extends Activity implements LocationListener {
         
         httpClient.getConnectionManager().shutdown();
         
-        String parsedText = "";
+     // TextView 表示用のテキストバッファ
+        StringBuffer stringBuffer = new StringBuffer();
         
         try {
-            // オブジェクトの生成
             JSONObject rootObject = new JSONObject(json);
+        	JSONObject responseObject = rootObject.getJSONObject("response");
+            JSONArray  venuesArray = responseObject.getJSONArray("venues");
+            JSONArray  categoriesArray = venuesArray.getJSONObject(0).getJSONArray("categories");
+                      
+            JSONObject bookObject[] = new JSONObject[2];
             
-            // JSON 形式データ文字列にインデントを加えた形に成形
-            parsedText = rootObject.toString(4);
-        }
-        catch (JSONException e){
+            bookObject[0] = venuesArray.getJSONObject(0);
+            bookObject[1] = categoriesArray.getJSONObject(0);
+            
+            // 地名のデータを取得
+            String name = bookObject[0].getString("name");
+            
+            //　カテゴリのデータを取得
+            String category = bookObject[1].getString("shortName");
+            
+            // 「地名」と「カテゴリ」をテキストに追加
+            stringBuffer.append("場所：" + name + "\n");
+            stringBuffer.append("カテゴリ：" + category + "\n");
+        } 
+        catch (JSONException e) {
             // 例外処理
         }
-           
+        
         TextView textView = new TextView(this);
-        textView.setHorizontallyScrolling(true);  // 行の折り返しをさせない
-        textView.setText(parsedText);             // 成形した文字列を表示
+        textView.setHorizontallyScrolling(true);
+        textView.setText(stringBuffer);
         ScrollView scrollView = new ScrollView(this);
         scrollView.addView(textView);
         setContentView(scrollView, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
- 
     }
  
     @Override
