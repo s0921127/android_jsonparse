@@ -137,12 +137,12 @@ public class JsonParse extends Activity implements LocationListener {
         
         httpClient.getConnectionManager().shutdown();
         
-     // TextView 表示用のテキストバッファ
+        // TextView 表示用のテキストバッファ
         StringBuffer stringBuffer = new StringBuffer();
         
         try {
             JSONObject rootObject = new JSONObject(json);
-        	JSONObject responseObject = rootObject.getJSONObject("response");
+            JSONObject responseObject = rootObject.getJSONObject("response");
             JSONArray  venuesArray = responseObject.getJSONArray("venues");
             JSONArray  categoriesArray = venuesArray.getJSONObject(0).getJSONArray("categories");
                       
