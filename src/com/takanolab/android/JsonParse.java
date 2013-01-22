@@ -27,11 +27,12 @@ import android.net.ParseException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class JsonParse extends Activity implements LocationListener {
+public class JsonParse extends Activity{
 	static final String SEARCH_URL = "https://api.foursquare.com/v2/venues/search?ll=35.6865271,139.692311&" +
 			"oauth_token=G4RUWUY4YAKSUWLEWLXPHRBQJZATY4XPTIAI4OT02CXMLMM3&v=20121017";
 	
@@ -41,47 +42,16 @@ public class JsonParse extends Activity implements LocationListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        // LocationManagerを取得
-        LocationManager mLocationManager =
-             (LocationManager) getSystemService(Context.LOCATION_SERVICE);
- 
-        // Criteriaオブジェクトを生成
-        Criteria criteria = new Criteria();
- 
-        // Accuracyを指定(低精度)
-        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-         
-        // PowerRequirementを指定(低消費電力)
-        criteria.setPowerRequirement(Criteria.POWER_LOW);
-         
-        // ロケーションプロバイダの取得
-        String provider = mLocationManager.getBestProvider(criteria, true);
- 
-        // LocationListenerを登録
-        mLocationManager.requestLocationUpdates(provider, 0, 0, this);
-        
-    }
-    
-    @Override
-    public void onLocationChanged(Location location) {
-        // 緯度の表示
-        //TextView tv_lat = (TextView) findViewById(R.id.Latitude);
-        //tv_lat.setText("Latitude:"+location.getLatitude());
- 
-        // 経度の表示
-        //TextView tv_lng = (TextView) findViewById(R.id.Longitude);
-        //tv_lng.setText("Longitude:"+location.getLongitude());
-    	
-    	//staticブロックなど、アプリケーション開始前に実行する。
+      //staticブロックなど、アプリケーション開始前に実行する。
     	StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         
         String scheme = "https";
         String authority = "api.foursquare.com";
         String path = "/v2/venues/search";
         
-        String ll = location.getLatitude() + ", " + location.getLongitude();
+        String ll = "35.454564,139.359051";
         String oauth_token = "G4RUWUY4YAKSUWLEWLXPHRBQJZATY4XPTIAI4OT02CXMLMM3";
-        String v = "20121017";
+        String v = "20130122";
         Uri.Builder uriBuilder = new Uri.Builder();
         
         uriBuilder.scheme(scheme);
@@ -141,25 +111,46 @@ public class JsonParse extends Activity implements LocationListener {
         StringBuffer stringBuffer = new StringBuffer();
         
         try {
-            JSONObject rootObject = new JSONObject(json);
-            JSONObject responseObject = rootObject.getJSONObject("response");
-            JSONArray  venuesArray = responseObject.getJSONArray("venues");
-            JSONArray  categoriesArray = venuesArray.getJSONObject(0).getJSONArray("categories");
-                      
-            JSONObject bookObject[] = new JSONObject[2];
-            
-            bookObject[0] = venuesArray.getJSONObject(0);
-            bookObject[1] = categoriesArray.getJSONObject(0);
-            
-            // 地名のデータを取得
-            String name = bookObject[0].getString("name");
-            
-            //　カテゴリのデータを取得
-            String category = bookObject[1].getString("shortName");
-            
-            // 「地名」と「カテゴリ」をテキストに追加
-            stringBuffer.append("場所：" + name + "\n");
-            stringBuffer.append("カテゴリ：" + category + "\n");
+			//Log.e("導入", "debug8");
+			JSONObject rootObject = new JSONObject(json);
+			JSONObject responseObject = rootObject.getJSONObject("response");
+			JSONArray venuesArray = responseObject.getJSONArray("venues");
+
+			int id = 0; /* 訪れたユーザの数の一番多いvenueの順番 */
+			double distance = 1000;
+			
+			/* 取得したvenueリスト中のvenueの数をログに出力 */
+			Log.e(String.valueOf(venuesArray.length()), "venue数");
+
+			/* 取得したvenueリストのvenueの中で距離の一番近いvenueを検索 */
+			for (int i = 0; i < venuesArray.length(); i++) {
+				JSONObject locationObject = venuesArray.getJSONObject(i).getJSONObject("location");
+					distance = Integer.parseInt(locationObject.getString("distance"));
+					id = i;
+					
+					JSONArray categoriesArray = venuesArray.getJSONObject(id).getJSONArray("categories");
+
+					//Log.e("オブジェクトのさかのぼり", "debug5");
+					JSONObject bookObject[] = new JSONObject[2];
+
+					bookObject[0] = venuesArray.getJSONObject(id);
+					bookObject[1] = categoriesArray.getJSONObject(0);
+
+					//Log.e("オブジェクトの代入", "debug6");
+					/* 地名のデータを取得 */
+					String name = bookObject[0].getString("name");
+
+					/* カテゴリのデータを取得 */
+					String category = bookObject[1].getString("shortName");
+
+					// resultsString = "成功";
+				
+		            stringBuffer.append("場所：" + name + "\n");
+		            stringBuffer.append("カテゴリ：" + category + "\n");
+		            stringBuffer.append("距離：" + distance + "\n");
+			}
+
+			
         } 
         catch (JSONException e) {
             // 例外処理
@@ -171,23 +162,6 @@ public class JsonParse extends Activity implements LocationListener {
         ScrollView scrollView = new ScrollView(this);
         scrollView.addView(textView);
         setContentView(scrollView, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-    }
- 
-    @Override
-    public void onProviderDisabled(String provider) {
-        // TODO Auto-generated method stub
-         
-    }
- 
-    @Override
-    public void onProviderEnabled(String provider) {
-        // TODO Auto-generated method stub
-         
-    }
- 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        // TODO Auto-generated method stub
- 
+        
     }
 }
